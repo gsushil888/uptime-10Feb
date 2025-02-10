@@ -1,0 +1,27 @@
+{
+	"size": 10,
+	"query": {
+		"bool": {
+			"filter": [
+				{
+					"term": {
+						"category.keyword": "JFS"
+					}
+				},
+				{
+					"range": {
+						"@timestamp": {
+							"gte": "now-1d/d",
+							"lt": "now/d"
+						}
+					}
+				},
+				{
+					"term": {
+						"email_status.keyword": "Success"
+					}
+				}
+			]
+		}
+	}
+}

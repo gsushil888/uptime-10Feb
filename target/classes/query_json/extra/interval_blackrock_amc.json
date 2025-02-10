@@ -1,0 +1,47 @@
+{
+	"size": 0,
+	"query": {
+		"bool": {
+			"filter": [
+				{
+					"range": {
+						"@timestamp": {
+							"gte": "now-1d/d",
+							"lt": "now/d",
+							"time_zone": "+05:30"
+						}
+					}
+				},
+				{
+					"term": {
+						"category.keyword": "BLACKROCK_AMC"
+					}
+				}
+			]
+		}
+	},
+	"aggs": {
+		"group_by_url": {
+			"terms": {
+				"field": "url.keyword",
+				"size": 10
+			},
+			"aggs": {
+				"hourly_avg": {
+					"date_histogram": {
+						"field": "@timestamp",
+						"fixed_interval": "10m",
+						"time_zone": "+05:30"
+					},
+					"aggs": {
+						"avg_uptime": {
+							"avg": {
+								"field": "uptime_percentage"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,45 @@
+{
+  "size": 0,
+  "query": {
+    "range": {
+      "@timestamp": {
+        "gte": "now-1d/d",
+        "lt": "now/d"
+      }
+    }
+  },
+  "aggs": {
+    "group_by_hostname": {
+      "terms": {
+        "field": "host.hostname.keyword",
+        "size": 1000
+      },
+      "aggs": {
+        "cpu_user_usage": {
+          "stats": {
+            "field": "system.cpu.user.norm.pct"
+          }
+        },
+        "cpu_system_usage": {
+          "stats": {
+            "field": "system.cpu.system.norm.pct"
+          }
+        },"cpu_total_usage": {
+		    "stats": {
+		      "field": "system.cpu.total.norm.pct"
+		    }
+		  },
+        "memory_usage": {
+          "stats": {
+            "field": "system.memory.used.pct"
+          }
+        },
+        "disk_usage": {
+          "stats": {
+            "field": "system.filesystem.used.pct"
+          }
+        }
+      }
+    }
+  }
+}

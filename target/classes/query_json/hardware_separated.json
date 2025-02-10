@@ -1,0 +1,105 @@
+{
+  "size": 0,
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "now-1h/h",
+              "lte": "now/h"
+            }
+          }
+        }
+      ],
+      "should": [
+        {
+          "range": {
+            "system.cpu.user.norm.pct": {
+              "gte": 0.50
+            }
+          }
+        },
+        {
+          "range": {
+            "system.cpu.system.norm.pct": {
+              "gte": 0.50
+            }
+          }
+        },
+        {
+          "range": {
+            "system.cpu.total.norm.pct": {
+              "gte": 0.60
+            }
+          }
+        }
+      ],
+      "minimum_should_match": 1
+    }
+  },
+  "aggs": {
+    "group_by_hostname": {
+      "terms": {
+        "field": "host.hostname.keyword",
+        "size": 100
+      },
+      "aggs": {
+        "high_cpu_user": {
+          "top_hits": {
+            "size": 100,
+            "_source": {
+              "includes": [
+                "@timestamp",
+                "system.cpu.user.norm.pct"
+              ]
+            },
+            "sort": [
+              {
+                "@timestamp": {
+                  "order": "desc"
+                }
+              }
+            ]
+          }
+        },
+        "high_cpu_system": {
+          "top_hits": {
+            "size": 100,
+            "_source": {
+              "includes": [
+                "@timestamp",
+                "system.cpu.system.norm.pct"
+              ]
+            },
+            "sort": [
+              {
+                "@timestamp": {
+                  "order": "desc"
+                }
+              }
+            ]
+          }
+        },
+        "high_cpu_total": {
+          "top_hits": {
+            "size": 100,
+            "_source": {
+              "includes": [
+                "@timestamp",
+                "system.cpu.total.norm.pct"
+              ]
+            },
+            "sort": [
+              {
+                "@timestamp": {
+                  "order": "desc"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "size": 0,
+  "query": {
+    "range": {
+      "@timestamp": {
+        "gte": "now-1d/d",
+        "lt": "now/d"
+      }
+    }
+  },
+  "aggs": {
+    "group_by_servername": {
+      "terms": {
+        "field": "servername.keyword", 
+        "size": 10000
+      },
+      "aggs": {
+        "min_latency": {
+          "min": {
+            "field": "latency"
+          }
+        },
+        "max_latency": {
+          "max": {
+            "field": "latency"
+          }
+        },
+        "avg_latency": {
+          "avg": {
+            "field": "latency"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+	"size": 0,
+	"query": {
+		"bool": {
+			"filter": [
+				{
+					"range": {
+						"@timestamp": {
+							"gte": "now-1d/d",
+							"lt": "now/d",
+							"time_zone": "+05:30"
+						}
+					}
+				},
+				{
+					"term": {
+						"category.keyword": "JFS"
+					}
+				}
+			]
+		}
+	},
+	"aggs": {
+		"group_by_url": {
+			"terms": {
+				"field": "url.keyword",
+				"size": 10
+			},
+			"aggs": {
+				"avg_uptime": {
+					"avg": {
+						"field": "uptime_percentage"
+					}
+				}
+			}
+		}
+	}
+}

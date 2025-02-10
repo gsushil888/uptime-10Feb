@@ -1,0 +1,61 @@
+{
+  "size": 0,
+  "query": {
+    "bool": {
+      "must": [
+        {
+          "range": {
+            "@timestamp": {
+              "gte": "now-1d/d",
+              "lte": "now/d"
+            }
+          }
+        },
+        {
+          "term": {
+            "category.keyword": "{{entity}}"
+          }
+        }
+      ],
+      "should": [
+        {
+          "range": {
+            "system.memory.actual.used.pct": {
+              "gte": 0.8
+            }
+          }
+        }
+      ],
+      "minimum_should_match": 1
+    }
+  },
+  "aggs": {
+    "group_by_hostname": {
+      "terms": {
+        "field": "host.hostname.keyword",
+        "size": 10000
+      },
+      "aggs": {
+        "high_memory_usage": {
+          "top_hits": {
+            "size": 1000,
+            "sort": [
+              {
+                "@timestamp": {
+                  "order": "desc"
+                }
+              }
+            ],
+            "_source": {
+              "includes": [
+                "@timestamp",
+                "system.memory.used.pct",
+                "system.memory.actual.used.pct"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

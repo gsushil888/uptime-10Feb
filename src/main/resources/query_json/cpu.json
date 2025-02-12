@@ -21,14 +21,14 @@
 				{
 					"range": {
 						"system.cpu.user.norm.pct": {
-							"gte": 0.8
+							"gte": 0.2
 						}
 					}
 				},
 				{
 					"range": {
 						"system.cpu.system.norm.pct": {
-							"gte": 0.8
+							"gte": 0.2
 						}
 					}
 				}

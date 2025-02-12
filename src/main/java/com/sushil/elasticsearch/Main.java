@@ -168,9 +168,11 @@ public class Main {
 	private static void extractDataFromElasticSearch(ElasticsearchClient client, Document document,
 			Map<String, String> jsonFilePathMap) throws IOException, DocumentException {
 
+		//------------------------------
 		InputStream queryJsonFile = new FileInputStream(jsonFilePathMap.get("interval"));
 		addTimeIntervalToPdfFromJson(queryJsonFile, document);
 
+		//---------------------------------
 		InputStream queryStream = new FileInputStream(jsonFilePathMap.get("overall"));
 		extractAverageUptime(client, document, queryStream);
 		queryJsonFile.close();
@@ -179,16 +181,26 @@ public class Main {
 		extractAllRecordsInterval(client, document, queryJsonFileForRecords);
 		queryJsonFileForRecords.close();
 
+		//----------------------------------
+		InputStream thresholdStream = new FileInputStream(jsonFilePathMap.get("cpu"));
+		CpuMemoryThreshold.extractCpuThreshold(thresholdStream);
+		thresholdStream.close();
+		
 		InputStream cpuStream = new FileInputStream(jsonFilePathMap.get("cpu"));
 		CpuMemoryThreshold.extractCpuUsageDetails(client, document, cpuStream);
 		cpuStream.close();
+		
+		//----------------------------------
+		InputStream memoryThresholdStream = new FileInputStream(jsonFilePathMap.get("memory"));
+		CpuMemoryThreshold.extractMemoryThreshold(memoryThresholdStream);
+		memoryThresholdStream.close();
 		
 		InputStream memoryStream = new FileInputStream(jsonFilePathMap.get("memory"));
 		CpuMemoryThreshold.extractMemoryUsageDetails(client, document, memoryStream);
 		memoryStream.close();
 
 	}
-
+	
 	private static void extractAverageUptime(ElasticsearchClient client, Document document, InputStream queryStream)
 			throws IOException, DocumentException {
 		JacksonJsonpMapper jsonpMapper = new JacksonJsonpMapper();
@@ -201,7 +213,8 @@ public class Main {
 		List<StringTermsBucket> buckets = groupByUrlAggregation.sterms().buckets().array();
 
 		// Add Section Header
-		addStyledSectionHeader(document, "A: Overall Uptime Average :");
+		addStyledSectionHeader(document, "Section A: Uptime Report :");
+		addStyledSectionHeader(document, "1: Overall Uptime Average :");
 
 		// Create Table with Better Formatting
 		PdfPTable table = new PdfPTable(new float[] { 3, 2 });
@@ -244,7 +257,7 @@ public class Main {
 		Aggregate groupByUrlAggregation = aggregate.get("group_by_url");
 		List<StringTermsBucket> buckets = groupByUrlAggregation.sterms().buckets().array();
 
-		addStyledSectionHeader(document, "Section 1: Time at which url uptime is less than 100%");
+		addStyledSectionHeader(document, "2:Time at which url uptime is less than 100%");
 		for (StringTermsBucket bucket : buckets) {
 			String url = bucket.key().stringValue();
 			Aggregate avgUptimeAggregations = bucket.aggregations().get("hourly_avg");
@@ -267,16 +280,16 @@ public class Main {
 			document.add(table);
 		}
 
-//		addStyledSectionHeader(document, "Section 2: All records between the specified range");
-//		for (StringTermsBucket bucket : buckets) {
-//			String url = bucket.key().stringValue();
-//			Aggregate avgUptimeAggregations = bucket.aggregations().get("hourly_avg");
-//			List<DateHistogramBucket> allBuckets = avgUptimeAggregations.dateHistogram().buckets().array();
-//
-//			PdfPTable table = createTableWithUrlHeader(url);
-//			populateTableWithData(table, allBuckets);
-//			document.add(table);
-//		}
+		addStyledSectionHeader(document, "3: All records between the specified range");
+		for (StringTermsBucket bucket : buckets) {
+			String url = bucket.key().stringValue();
+			Aggregate avgUptimeAggregations = bucket.aggregations().get("hourly_avg");
+			List<DateHistogramBucket> allBuckets = avgUptimeAggregations.dateHistogram().buckets().array();
+
+			PdfPTable table = createTableWithUrlHeader(url);
+			populateTableWithData(table, allBuckets);
+			document.add(table);
+		}
 	}
 
 	// ------------DATE FORMATS METHOD--------------------
@@ -452,6 +465,7 @@ public class Main {
 		PdfPCell noDowntimeCell = new PdfPCell(new Paragraph("No Downtime"));
 		noDowntimeCell.setColspan(2);
 		noDowntimeCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+		noDowntimeCell.setPadding(5f);
 		table.addCell(noDowntimeCell);
 	}
 

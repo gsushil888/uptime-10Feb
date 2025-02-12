@@ -21,7 +21,7 @@
         {
           "range": {
             "system.memory.actual.used.pct": {
-              "gte": 0.8
+              "gte": 0.4
             }
           }
         }

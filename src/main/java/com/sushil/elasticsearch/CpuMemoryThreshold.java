@@ -32,12 +32,12 @@ public class CpuMemoryThreshold {
 	private static final String METRICBEAT_INDEX = "metricbeat_index";
 
 	private static final String SECTION_HEADER_CPU_USAGE = "Section B: CPU Usage Details";
-	private static String SECTION_HEADER_CPU_EXCEEDS = "1.Timestamp where the cpu exceeds 20% for over 5 minutes";
-	private static String SECTION_HEADER_CPU_ALL_DETAILS = "2.Details of CPU usage exceeding above 20%";
+	private static String SECTION_HEADER_CPU_EXCEEDS = "Timestamp where the cpu exceeds 20% for over 5 minutes";
+	private static String SECTION_HEADER_CPU_ALL_DETAILS = "Details of CPU usage exceeding above 20%";
 
 	private static final String SECTION_HEADER_MEMORY_USAGE = "Section C: MEMORY Usage Details";
-	private static String SECTION_HEADER_MEMORY_EXCEEDS = "1.Timestamp where the memory exceeds 80% for over 5 minutes";
-	private static String SECTION_HEADER_MEMORY_ALL_DETAILS = "2.Details of Memory usage exceeding above 80%";
+	private static String SECTION_HEADER_MEMORY_EXCEEDS = "Timestamp where the memory exceeds 80% for over 5 minutes";
+	private static String SECTION_HEADER_MEMORY_ALL_DETAILS = "Details of Memory usage exceeding above 80%";
 
 	private static final String NO_THRESHOLD_MESSAGE = "No servers reached the threshold";
 	private static final String NO_RECORD_MESSAGE = "No threshold reached";
@@ -45,6 +45,9 @@ public class CpuMemoryThreshold {
 	private static final ZoneId IST_ZONE = ZoneId.of("Asia/Kolkata");
 	private static final List<String> CPU_TABLE_HEADERS = Arrays.asList("Timestamp", "User CPU (%)", "System CPU (%)",
 			"Total CPU (%)");
+	
+	private static List<StringTermsBucket> cpustoredBuckets;
+	private static List<StringTermsBucket> memstoredBuckets;
 
 	private static Aggregate fetchCpuUsageData(ElasticsearchClient client, InputStream queryStream) throws IOException {
 
@@ -173,7 +176,10 @@ public class CpuMemoryThreshold {
 		}
 
 		document.add(thresholdTable);
-		generateCpuUsageDetailTable(document, buckets, DATE_TIME_FORMATTER, IST_ZONE);
+//		generateCpuUsageDetailTable(document, buckets, DATE_TIME_FORMATTER, IST_ZONE);
+
+		// Store the details table content and generate it later when required
+		storeCpuUsageDetailsForLater(buckets);
 
 	}
 
@@ -356,6 +362,19 @@ public class CpuMemoryThreshold {
 		return Math.max(userCpuThreshold, systemCpuThreshold);
 	}
 
+	// New method to store CPU details for later
+	private static void storeCpuUsageDetailsForLater(List<StringTermsBucket> buckets) {
+		cpustoredBuckets = buckets; // store for later use (define storedBuckets as a static variable or in a
+									// context object)
+	}
+
+	// Call this method later when you want to add the details table
+	public static void addCpuUsageDetailsLater(Document document) throws DocumentException {
+		if (cpustoredBuckets != null && !cpustoredBuckets.isEmpty()) {
+			generateCpuUsageDetailTable(document, cpustoredBuckets, DATE_TIME_FORMATTER, IST_ZONE);
+		}
+	}
+
 	// --------MEMORY--------------------
 
 	private static Aggregate fetchMemoryUsageData(ElasticsearchClient client, InputStream queryStream)
@@ -484,7 +503,9 @@ public class CpuMemoryThreshold {
 		}
 
 		document.add(thresholdTable);
-		generateMemoryUsageDetailTable(document, buckets, DATE_TIME_FORMATTER, IST_ZONE);
+//		generateMemoryUsageDetailTable(document, buckets, DATE_TIME_FORMATTER, IST_ZONE);
+		
+		storeMemUsageDetailsForLater(buckets);
 	}
 
 	private static void generateMemoryUsageDetailTable(Document document, List<StringTermsBucket> buckets,
@@ -591,6 +612,9 @@ public class CpuMemoryThreshold {
 	            .map(value -> value * 100)
 	            .orElse(97.0);
 	}
+	
+	
+
 
 	public static Map<String, Double> fetchMemoryUsageStats(ElasticsearchClient client, String hostname, Instant gte,
 			Instant lt) throws IOException {
@@ -681,6 +705,20 @@ public class CpuMemoryThreshold {
 		SECTION_HEADER_MEMORY_ALL_DETAILS = SECTION_HEADER_MEMORY_ALL_DETAILS.replace("80%",
 				String.format("%.0f%%", memoryThreshold * 100));
 		return memoryThreshold;
+	}
+	
+
+	// New method to store CPU details for later
+	private static void storeMemUsageDetailsForLater(List<StringTermsBucket> buckets) {
+		memstoredBuckets = buckets; // store for later use (define storedBuckets as a static variable or in a
+									// context object)
+	}
+
+	// Call this method later when you want to add the details table
+	public static void addMemUsageDetailsLater(Document document) throws DocumentException {
+		if (memstoredBuckets != null && !memstoredBuckets.isEmpty()) {
+			generateMemoryUsageDetailTable(document, memstoredBuckets, DATE_TIME_FORMATTER, IST_ZONE);
+		}
 	}
 
 	// -----------------

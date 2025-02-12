@@ -49,6 +49,7 @@ public class Main {
 	private static String REPORT_FROM = "";
 	private static String REPORT_TO = "";
 	private static final String ENTITIES = ConfigLoader.get("entities");
+	private static List<StringTermsBucket> storedBuckets;
 
 	public static void main(String[] args) throws IOException {
 		String[] entities = ENTITIES.split(",");
@@ -198,6 +199,10 @@ public class Main {
 		InputStream memoryStream = new FileInputStream(jsonFilePathMap.get("memory"));
 		CpuMemoryThreshold.extractMemoryUsageDetails(client, document, memoryStream);
 		memoryStream.close();
+		
+		addAllRecordsBucketsToDocument(document);
+		CpuMemoryThreshold.addCpuUsageDetailsLater(document);
+		CpuMemoryThreshold.addMemUsageDetailsLater(document);
 
 	}
 	
@@ -256,6 +261,9 @@ public class Main {
 		Map<String, Aggregate> aggregate = searchResponse.aggregations();
 		Aggregate groupByUrlAggregation = aggregate.get("group_by_url");
 		List<StringTermsBucket> buckets = groupByUrlAggregation.sterms().buckets().array();
+		
+		// Store for later use
+	    storedBuckets = buckets;  
 
 		addStyledSectionHeader(document, "2:Time at which url uptime is less than 100%");
 		for (StringTermsBucket bucket : buckets) {
@@ -280,18 +288,36 @@ public class Main {
 			document.add(table);
 		}
 
-		addStyledSectionHeader(document, "3: All records between the specified range");
-		for (StringTermsBucket bucket : buckets) {
-			String url = bucket.key().stringValue();
-			Aggregate avgUptimeAggregations = bucket.aggregations().get("hourly_avg");
-			List<DateHistogramBucket> allBuckets = avgUptimeAggregations.dateHistogram().buckets().array();
-
-			PdfPTable table = createTableWithUrlHeader(url);
-			populateTableWithData(table, allBuckets);
-			document.add(table);
-		}
+//		addStyledSectionHeader(document, "3: All records between the specified range");
+//		for (StringTermsBucket bucket : buckets) {
+//			String url = bucket.key().stringValue();
+//			Aggregate avgUptimeAggregations = bucket.aggregations().get("hourly_avg");
+//			List<DateHistogramBucket> allBuckets = avgUptimeAggregations.dateHistogram().buckets().array();
+//
+//			PdfPTable table = createTableWithUrlHeader(url);
+//			populateTableWithData(table, allBuckets);
+//			document.add(table);
+//		}
 	}
 
+	
+	private static void addAllRecordsBucketsToDocument(Document document) throws DocumentException {
+	    if (storedBuckets == null || storedBuckets.isEmpty()) {
+	        return; // No data stored
+	    }
+
+	    addStyledSectionHeader(document, "3: All records between the specified range");
+	    for (StringTermsBucket bucket : storedBuckets) {
+	        String url = bucket.key().stringValue();
+	        Aggregate avgUptimeAggregations = bucket.aggregations().get("hourly_avg");
+	        List<DateHistogramBucket> allBuckets = avgUptimeAggregations.dateHistogram().buckets().array();
+
+	        PdfPTable table = createTableWithUrlHeader(url);
+	        populateTableWithData(table, allBuckets);
+	        document.add(table);
+	    }
+	}
+	
 	// ------------DATE FORMATS METHOD--------------------
 
 	public static Map<String, String> addReportDatesToPdfPath(InputStream queryJsonStream) {

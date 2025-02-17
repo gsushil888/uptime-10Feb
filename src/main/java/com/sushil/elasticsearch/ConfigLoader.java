@@ -11,9 +11,12 @@ public class ConfigLoader {
 //	private static final String CONFIG_PATH = "src\\main\\resources\\config.properties";
 //    private static final String CONFIG_PATH = "/elkapp/app/uptimereports/config.properties";
 
-	private static final String CONFIG_PATH = "src\\main\\resources\\config\\config_final_16jan.properties";
+//	private static final String CONFIG_PATH = "src\\main\\resources\\config\\config_final_16jan.properties";
 //	private static final String CONFIG_PATH = "/elkapp/app/uptimereports/config/config_final_16jan.properties";
 
+	private static final String CONFIG_PATH = "src\\main\\resources\\config\\config_final_12feb.properties";
+//	private static final String CONFIG_PATH = "/elkapp/app/uptimereports/config/config_final_12feb.properties";
+	
 	private static final Properties properties = new Properties();
 
 	// Static block to load configuration

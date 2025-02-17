@@ -62,7 +62,7 @@ public class Main {
 
 		for (String entity : entities) {
 			entity = entity.trim().toLowerCase();
-			System.out.println(entity);
+			System.out.println("PROCESSING ENTITY : "+entity);
 
 			String intervalJson = intervalTemplateJson.replace("{{entity}}", entity.toUpperCase());
 			String overallJson = overallTemplateJson.replace("{{entity}}", entity.toUpperCase());
@@ -89,6 +89,7 @@ public class Main {
 
 			intervalTempFile.delete();
 			overallTempFile.delete();
+			System.out.println("--------------------------");
 		}
 
 		if (emailEntitiesList.length() > 0) {
@@ -102,7 +103,7 @@ public class Main {
 				+ "Let me know if you have any questions.\n\nBest regards";
 
 		System.out.println("EMAIL MESSAGE:-> \n" + emailMessage);
-//		 sendEmailWithAttachments(RECIPIENTS, emailSubject,emailMessage,pdfFilePaths);
+		 sendEmailWithAttachments(RECIPIENTS, emailSubject,emailMessage,pdfFilePaths);
 		
 	}
 
@@ -187,7 +188,7 @@ public class Main {
 		thresholdStream.close();
 		
 		InputStream cpuStream = new FileInputStream(jsonFilePathMap.get("cpu"));
-		CpuMemoryThreshold.extractCpuUsageDetails(client, document, cpuStream);
+		CpuMemoryThreshold.generateCpuUsageTables(client, document, cpuStream);
 		cpuStream.close();
 		
 		//----------------------------------
@@ -196,7 +197,7 @@ public class Main {
 		memoryThresholdStream.close();
 		
 		InputStream memoryStream = new FileInputStream(jsonFilePathMap.get("memory"));
-		CpuMemoryThreshold.extractMemoryUsageDetails(client, document, memoryStream);
+		CpuMemoryThreshold.generateMemoryUsageTables(client, document, memoryStream);
 		memoryStream.close();
 
 	}
@@ -213,8 +214,8 @@ public class Main {
 		List<StringTermsBucket> buckets = groupByUrlAggregation.sterms().buckets().array();
 
 		// Add Section Header
-		addStyledSectionHeader(document, "Section A: Uptime Report :");
-		addStyledSectionHeader(document, "1: Overall Uptime Average :");
+		addStyledSectionHeader(document, "Section A: APPLICATION URL UPTIME ");
+		addStyledSubtitleSectionHeader(document, "1: Overall average URL uptime percentage for the specified report time range");
 
 		// Create Table with Better Formatting
 		PdfPTable table = new PdfPTable(new float[] { 3, 2 });
@@ -257,7 +258,7 @@ public class Main {
 		Aggregate groupByUrlAggregation = aggregate.get("group_by_url");
 		List<StringTermsBucket> buckets = groupByUrlAggregation.sterms().buckets().array();
 
-		addStyledSectionHeader(document, "2:Time at which url uptime is less than 100%");
+		addStyledSubtitleSectionHeader(document, "2:Timestamp when application URL uptime dropped below 100%");
 		for (StringTermsBucket bucket : buckets) {
 			String url = bucket.key().stringValue();
 			Aggregate avgUptimeAggregations = bucket.aggregations().get("hourly_avg");
@@ -280,7 +281,7 @@ public class Main {
 			document.add(table);
 		}
 
-		addStyledSectionHeader(document, "3: All records between the specified range");
+		addStyledSubtitleSectionHeader(document, "3: Detailed records of application URL uptime percentage for the specified report time range");
 		for (StringTermsBucket bucket : buckets) {
 			String url = bucket.key().stringValue();
 			Aggregate avgUptimeAggregations = bucket.aggregations().get("hourly_avg");
@@ -423,7 +424,7 @@ public class Main {
 
 		Font sectionFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, BaseColor.BLACK);
 
-		Paragraph title = new Paragraph("Uptime Percentage Report (" + reportName.toUpperCase().replace("_", " ")
+		Paragraph title = new Paragraph("Uptime Report (" + reportName.toUpperCase().replace("_", " ")
 				+ ")\nGenerated At: " + currentDateTime + " IST", sectionFont);
 		title.setAlignment(Element.ALIGN_CENTER);
 		title.setSpacingAfter(20f);
@@ -455,8 +456,17 @@ public class Main {
 	private static void addStyledSectionHeader(Document document, String title) throws DocumentException {
 		Font sectionFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, BaseColor.BLACK);
 		Paragraph sectionHeader = new Paragraph(title, sectionFont);
-		sectionHeader.setSpacingBefore(5f);
-		sectionHeader.setSpacingAfter(5f);
+		sectionHeader.setSpacingBefore(3f);
+		sectionHeader.setSpacingAfter(1f);
+		sectionHeader.setAlignment(Element.ALIGN_LEFT);
+		document.add(sectionHeader);
+	}
+	
+	private static void addStyledSubtitleSectionHeader(Document document, String title) throws DocumentException {
+		Font sectionFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11, BaseColor.BLACK);
+		Paragraph sectionHeader = new Paragraph(title, sectionFont);
+		sectionHeader.setSpacingBefore(3f);
+		sectionHeader.setSpacingAfter(2f);
 		sectionHeader.setAlignment(Element.ALIGN_LEFT);
 		document.add(sectionHeader);
 	}
